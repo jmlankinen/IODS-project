@@ -1,7 +1,11 @@
-
 # About the project
 
-*Write a short description about the course and add a link to your GitHub repository here. This is an R Markdown (.Rmd) file so you should use R Markdown syntax.*
+Hello. This project page is for the course [Introduction to Open Data Science](https://studies.helsinki.fi/courses/cu/hy-CU-135623320-2020-08-01/PHD-302/Introduction_to_Open_Data_Science). In this page I'll submit and report my weekly assignments. The github repo for this project page is located [here](https://github.com/jmlankinen/IODS-project).
+
+## Exercise Set 1 reflection
+
+I've done an introduction course of R recently so I've skimmed through the exercise set as much of the syntax was known to me before. I felt that the introduction course's more hands-on approach (actually writing the code) is better for learning the syntax but I suppose once we begin the 'real' assignments the learning process will really begin. Nevertheless, I like how everything is inside R studio so there's not that much alt tabbing while learning the syntax. Also it was easy to learn to basics of R Markdown via cheatsheet & reference guide.
+
 
 ```{r}
 # This is a so-called "R chunk" where you can write R code.
@@ -9,5 +13,3 @@
 date()
 
 ```
-The text continues here.
-
