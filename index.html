@@ -317,8 +317,8 @@ pre code {
   border-radius: 4px;
 }
 
-.tabset-dropdown > .nav-tabs > li.active:before {
-  content: "";
+.tabset-dropdown > .nav-tabs > li.active:before, .tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "\e259";
   font-family: 'Glyphicons Halflings';
   display: inline-block;
   padding: 10px;
@@ -326,16 +326,9 @@ pre code {
 }
 
 .tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
-  content: "";
-  border: none;
-}
-
-.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
-  content: "";
+  content: "\e258";
   font-family: 'Glyphicons Halflings';
-  display: inline-block;
-  padding: 10px;
-  border-right: 1px solid #ddd;
+  border: none;
 }
 
 .tabset-dropdown > .nav-tabs > li.active {
@@ -402,17 +395,21 @@ here</a></li>
 </div>
 <div id="about-the-project" class="section level1">
 <h1>About the project</h1>
-<p>Hello. This project page is for the course Introduction to Open Data
-Science. In this page I’ll submit and report my weekly assignments. The
-github repo for this project page is located <a href="https://github.com/jmlankinen/IODS-project">here</a>.</p>
-<p><em>Write a short description about the course and add a link to your
-GitHub repository here. This is an R Markdown (.Rmd) file so you should
-use R Markdown syntax.</em></p>
+<p>Hello. This project page is for the course <a href="https://studies.helsinki.fi/courses/cu/hy-CU-135623320-2020-08-01/PHD-302/Introduction_to_Open_Data_Science">Introduction
+to Open Data Science</a>. In this page I’ll submit and report my weekly
+assignments. The github repo for this project page is located <a href="https://github.com/jmlankinen/IODS-project">here</a>.</p>
+<p>I’ve done an introduction course of R recently so I’ve skimmed
+through the exercise set as much of the syntax was known to me before. I
+felt that the introduction course’s more hands-on approach (actually
+writing the code) is better for learning the syntax but I suppose once
+we begin the ‘real’ assignments the learning process will really begin.
+Nevertheless, I like how everything is inside R studio so there’s not
+that much alt tabbing while learning the syntax. Also it was easy to
+learn to basics of R Markdown via cheatsheet &amp; reference guide.</p>
 <pre class="r"><code># This is a so-called &quot;R chunk&quot; where you can write R code.
 
 date()</code></pre>
-<pre><code>## [1] &quot;Sat Nov  5 17:17:04 2022&quot;</code></pre>
-<p>The text continues here.</p>
+<pre><code>## [1] &quot;Sat Nov  5 20:19:32 2022&quot;</code></pre>
 <hr />
 </div>
 <div id="insert-chapter-2-title-here" class="section level1">
@@ -427,7 +424,7 @@ writing and reading R code as well as statistical methods.</li>
 advanced methods you are using.</li>
 </ul>
 <pre class="r"><code>date()</code></pre>
-<pre><code>## [1] &quot;Sat Nov  5 17:17:04 2022&quot;</code></pre>
+<pre><code>## [1] &quot;Sat Nov  5 20:19:32 2022&quot;</code></pre>
 <p>Here we go again…</p>
 <hr />
 <p>(more chapters to be added similarly as we proceed with the
