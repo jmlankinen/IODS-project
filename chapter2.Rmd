@@ -1,13 +1,116 @@
-# Insert chapter 2 title here
-
-*Describe the work you have done this week and summarize your learning.*
-
-- Describe your work and results clearly. 
-- Assume the reader has an introductory course level understanding of writing and reading R code as well as statistical methods.
-- Assume the reader has no previous knowledge of your data or the more advanced methods you are using.
+# Assignment 2: Regression and model validation
 
 ```{r}
 date()
 ```
 
-Here we go again...
+## Data wrangling exercise
+
+This was your typical data wrangling exercise with csv reading, row, column name modifications and finally csv writing. Found this set to be useful as I previously had only worked with existing data frames within R. As no output was needed in the course diary you can check the results of the data wrangling exercise [my data folder in the repo](https://github.com/jmlankinen/IODS-project/data) if you wish to do so.
+
+## Analysis
+
+### 1. Reading data
+
+The data learning2014.txt is read in the R markdown box below. With str() function we can see that it has 7 variables (age, attitude, deep, stra, surf & points). The dimensions of the table are 166x7. The data is the result of a survey for approaches to learning, more info about the variables can be found [here](https://www.mv.helsinki.fi/home/kvehkala/JYTmooc/JYTOPKYS3-meta.txt). 
+
+```{r}
+library(tidyverse)
+lrn14 <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/learning2014.txt", sep=",", header=TRUE)
+str(lrn14)
+dim(lrn14)
+```
+
+
+### 2. Graphical overview of data and summaries
+
+Let's have a look how the data looks. First we use pairs() that draws a scatter plot of the data. Scatter plot shows the relationships between two variables. We exclude the gender column with [-1]. 
+```{r}
+pairs(lrn14[-1])
+```
+
+For males:
+```{r}
+male <- filter(lrn14, gender=="M")
+pairs(male[-1])
+```
+
+For females:
+```{r}
+female <-filter(lrn14, gender=="F")
+pairs(female[-1])
+```
+
+As we can see the scatter plot is a bit of a mess to look at with this resolution so it's better to look at the summaries at a variable level.
+
+```{r}
+summary(lrn14)
+summary(male)
+summary(female)
+```
+
+The summaries give us a clearer picture of the data. There were roughly twice as many females in the survey. Median age of females was 22 whereas males were 24. The median differences of question variables (attitude, deep, stra & surf) between the genders had a roughly max 0.2 difference with the exception of attitude in which males had a higher median than female (3.4 vs 2.95). There's no clear answer why there's an attitude difference but one explaining factor might be the points distribution in which male's mean points were 1.15 higher than female's - positive attitude could be derived from a positive association with points?
+
+Let's also show the summaries in a more graphical way with ggplot2 library.
+
+```{r}
+library(GGally)
+library(ggplot2)
+p <- ggpairs(lrn14, mapping = aes(col=gender), lower = list(combo = wrap("facethist", bins = 20)))
+p
+```
+
+As suspected the plot shows a high positive correlation between points and attitude.
+
+
+### 3. Regression model
+
+From the previous plot we noticed a high correlation between attitude and points. Let's also pick learning strategic and surface dimensions as our explanatory variables as they had the next highest absolute correlations (0.146 and 0.144).
+
+```{r}
+model <- lm(points ~ attitude + stra + surf, data = lrn14)
+summary(model)
+```
+The p-value PR(>|t|) is an indication if whether or not we can reject or accept a hypothesis - a predictior being not meaningful to our model. A lower p-value means that the variable is a good addition to a model. Strategy is pretty bad variable also as it's still over 0.05 which is the standard way to test if a predictor is meaningful. Let's first take away surface as it has the highest p-value and see the results.
+
+```{r}
+model <- lm(points ~ attitude + stra, data = lrn14)
+summary(model)
+```
+The model improved but p-value of strategic learning is still over 0.05 so let's remove it.
+
+```{r}
+model <- lm(points ~ attitude, data = lrn14)
+summary(model)
+```
+
+### 4. Summary of model and R-squared model
+
+```{r}
+final_model <- lm(points ~ attitude, data = lrn14)
+summary(model)
+```
+
+Having higher scores in attitude is a strong predictor for scoring higher in the examns. Our model's formula is Points = 11.6372 + attitude * 3.5255. Basically for every point in attitude the exam points go roughly 3.5 higher. The intercept point (attitude being 0) at 11.6732 has a standard error of 1.8303 and the actual attitude variable has a standard error of 0.5674.
+
+The last 3 rows of code refers to so called R-squared model. Basically it's a way to test the model. The R-squared measure is defined by the proportion of total variability by the model. To put it simply: models that poorly fit the data have a value close to 0 (0%) and in this model's case the value is 0.1906 so the model explains 19.06% of the total variability. The adjusted value refers to a modified version of R-squared that adjusts for non-significant predictors in the model. It's good for determining whether additional input variables are adding to the model (if such exists) - a higher adjusted R-squared value indicates tahat additional input variables are adding value.
+
+### 5. Diagnostic plots
+
+```{r}
+plot(final_model, 1)
+```
+
+The residuals vs fitted values plot is used to detect non-linearity, unequal error variances and outliers. Overall the fitted model is an example of a well-behaved plot in which the residuals are around the 0 line and the residuals form a horizontal band around the 0 line. It seems that the fitted model is fairly appropriate for the data.
+
+```{r}
+plot(final_model, 2)
+```
+
+The Q-Q plot's points roughly form a line in the middle section but we can see that the plot 'curves' a bit at the end. This means that the middle section is fairly normally distributed but the highest quantile probably isn't.
+
+```{r}
+plot(final_model, 5)
+```
+
+Residuals vs leverage plot allows us to identify influential observations in our model. No data point falls out of the Cook's distance so there are no influential points in our model and the points are fairly evenly distributed around the 0-line. This tells us that the points are approximated fairly well.

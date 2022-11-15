@@ -42,6 +42,7 @@ learning <- filter(learning2014, Points > 0)
 
 #set working directory from session -> set working directory -> to project directory
 
+#create csv file named learning to my project folder
 write.csv(learning, 
           file = "E:/ohjelmointi/IODS/IODS-project/data/learning2014.csv", 
           row.names = FALSE)
@@ -49,4 +50,4 @@ write.csv(learning,
 read.csv("E:/ohjelmointi/IODS/IODS-project/data/learning2014.csv")
 str(read.csv("E:/ohjelmointi/IODS/IODS-project/data/learning2014.csv"))
 dim(read.csv("E:/ohjelmointi/IODS/IODS-project/data/learning2014.csv"))
-#still 166x7
+#still 166x7 and exercise done :)
