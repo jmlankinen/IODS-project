@@ -6,7 +6,7 @@ date()
 
 ## Data wrangling exercise
 
-This was your typical data wrangling exercise with csv reading, row, column name modifications and finally csv writing. Found this set to be useful as I previously had only worked with existing data frames within R. As no output was needed in the course diary you can check the results of the data wrangling exercise [my data folder in the repo](https://github.com/jmlankinen/IODS-project/data) if you wish to do so.
+This was your typical data wrangling exercise with csv reading, row, column name modifications and finally csv writing. Found this set to be useful as I previously had only worked with existing data frames within R. As no output was needed in the course diary you can check the results of the data wrangling exercise [my data folder in the repo](https://github.com/jmlankinen/IODS-project/tree/master/data) if you wish to do so.
 
 ## Analysis
 
