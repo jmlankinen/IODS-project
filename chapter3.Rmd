@@ -186,4 +186,6 @@ loss_func <- function(class, prob) {
 loss_func(class = alc$high_use, prob = alc$probability)
 ```
 
-We get 21.4% of the predictions wrong with training data. Overall the model has a pretty hard time predicting higher usag (only 49 predictions correct out of 111 actuals). This might be due to the model's simplicity (only two variables) and because it's using sex as variable which has only two values. This limits it quite significantly since it values sex quite heavily when predicting high usage. For future reference it would be wise to look into other significant variables and add them to the model.
+We get 21.4% of the predictions wrong with training data. Overall the model has a pretty hard time predicting higher usag (only 49 predictions correct out of 111 actuals). This might be due to the model's simplicity (only two variables) and because it's using sex as variable which has only two values. This limits it quite significantly since it values sex quite heavily when predicting high usage. This can be seen actual values vs prediction graph - probabilities can only get 10 different values due to the variables (sex has two and goout had five). 
+
+For future modeling purposes it would be wise to make the model a bit more complex by adding and look into what values variables can get so that you can 'catch' the full spectrum of predictions with the model as this one is lacking. Oh well, it was truly a learning experience and I hope you got something out of this too.

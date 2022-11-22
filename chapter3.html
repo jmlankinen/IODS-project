@@ -355,7 +355,7 @@ display: none;
 <div id="assignment-3-logistic-regression" class="section level1">
 <h1>Assignment 3: Logistic Regression</h1>
 <pre class="r"><code>date()</code></pre>
-<pre><code>## [1] &quot;Tue Nov 22 02:54:48 2022&quot;</code></pre>
+<pre><code>## [1] &quot;Tue Nov 22 03:10:51 2022&quot;</code></pre>
 <div id="data-wrangling-exercise" class="section level2">
 <h2>Data wrangling exercise</h2>
 <p>This time we joined two datasets together by their unique
@@ -733,9 +733,14 @@ model has a pretty hard time predicting higher usag (only 49 predictions
 correct out of 111 actuals). This might be due to the model’s simplicity
 (only two variables) and because it’s using sex as variable which has
 only two values. This limits it quite significantly since it values sex
-quite heavily when predicting high usage. For future reference it would
-be wise to look into other significant variables and add them to the
-model.</p>
+quite heavily when predicting high usage. This can be seen actual values
+vs prediction graph - probabilities can only get 10 different values due
+to the variables (sex has two and goout had five).</p>
+<p>For future modeling purposes it would be wise to make the model a bit
+more complex by adding and look into what values variables can get so
+that you can ‘catch’ the full spectrum of predictions with the model as
+this one is lacking. Oh well, it was truly a learning experience and I
+hope you got something out of this too.</p>
 </div>
 </div>
 </div>
