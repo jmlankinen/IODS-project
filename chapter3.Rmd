@@ -1,0 +1,189 @@
+# Assignment 3: Logistic Regression
+
+```{r}
+date()
+```
+
+## Data wrangling exercise
+
+This time we joined two datasets together by their unique identifiers. I found the exercise useful though the wording 'duplicates' in the assignment kind of messed with my head since the 'duplicates' were actually different courses (portugal and math) which are unique values. As no output was needed in the course diary you can check the results of the data wrangling exercise [my data folder in the repo](https://github.com/jmlankinen/IODS-project/tree/master/data) if you wish to do so.
+
+## Analysis
+
+The purpose of this analysis is to study the relationships between high/low alcohol consumption and variables within a dataset.
+
+### 1. Reading the data
+
+```{r}
+library(tidyverse)
+library(GGally)
+alc <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/alc.csv", sep=",", header=TRUE)
+glimpse(alc)
+```
+
+The data we look into this exercise is about student alcohol consumption and its' affect to student performance. Glimpse() function gives us a sneak peek into the dataset. It has 35 variables/columns which are in the following forms: integer, character, double and logical. The csv file in hand has been modified based on the data set found [here](https://archive.ics.uci.edu/ml/datasets/Student+Performance). The data is from a survey which was initially done to two different courses and in this modified csv file we've taken answers by students which were in both courses. The following adjustments have been made to the joined data set:
+
+- The variables not used for joining the two data have been combined by averaging (including the grade variables)
+- 'alc_use' is the average of 'Dalc' and 'Walc'
+- 'high_use' is TRUE if 'alc_use' is higher than 2 and FALSE otherwise
+
+
+### 2. Hypothesis
+
+We're tasked to pick four interesting variables in the data and present a hypothesis about their relationships with alcohol consumption.
+
+1. Students who consume a lot of alcohol (high_use) score lower in test than students who don't.
+
+2. Students' whose father have a higher education level are less likely to consume alcohol than those with lower education.
+
+3. Outgoing students are more likely to consume more alcohol
+
+4. Male students are more likely to consume more alcohol than female students.
+
+### 3. Exploring hypotheses
+
+With hypotheses chosen we'll numerically and graphically explore the chosen variables with a fitting way. 
+
+#### Alcohol consumption and test scores
+
+```{r}
+alc %>% group_by(high_use) %>% summarise(count = n(), median_grade = median(G3), mean_grade = mean(G3), Quartile11 = quantile(G3)[2], Quartile3 = quantile(G3)[4])
+g1 <- ggplot(alc, aes(x = high_use, y = G3, fill=high_use))
+g1 + geom_boxplot() + ylab("Grade")
+```
+
+In the dataset there were 111 cases of high use alcohol (TRUE) consumers and 259 with less than 2 score of alcohol usage (FALSE). As expected high use of alcohol seems to have a negative effect on final test scores as the mean score is roughly 1 point less than the counterpart. High usage boxplot Q3 line is at the level of lower usage plot's median. It's also very tightly packed with 1st quartile & 3rd quartile being in the range of 10-12 compared to lower usage's 10-14.
+
+#### Father's education's affect on student's alcohol consumption
+
+```{r}
+alc %>% group_by(Fedu, high_use) %>% summarise(count = n())
+
+#making a dataset based on summary
+Fedudata <- data.frame(
+  fedu = c("0", "0", "1", "1", "2", "2", "3", "3", "4", "4"),
+  high_usage = c(FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE),
+  count = c(2,0,49,24,75,30,70,27,63,30)
+)
+
+ggplot(Fedudata, aes(fill=high_usage, y=count, x=fedu)) + geom_bar(position="dodge", stat="identity") + xlab("Fathers' education level") + ylab("Cases")
+```
+
+We should exclude the 0 education level due it's small sample size. It's not evident from the bar graphs that father's education level has a significant impact on student's high usage of alcohol. In the first education level (primary school) the high usage is roughly the same as in the fourth education level (higher education). Interestingly education levels 2-3 seem to have a slightly smaller proportion of high usage alcohol consumers than in education levels 1 and 4. Out of interest I checked the effect on male students specifically and found a difference there:
+
+```{r}
+xtabs(~Fedu+high_use+sex, alc)
+
+#making a dataset based on summary of male students with father's grouped education levels 0-2 and 3-4
+Fedudata <- data.frame(
+  fedu = c("0-2", "0-2", "3-4", "3-4"),
+  high_usage = c(FALSE, TRUE, FALSE, TRUE),
+  count = c(46,36,59,34)
+)
+
+ggplot(Fedudata, aes(fill=high_usage, y=count, x=fedu)) + geom_bar(position="dodge", stat="identity") + xlab("Father's education level") + ylab("Cases")
+```
+
+Seems like father's low education level increases the proportion of high usage alcohol consumers in male students.
+
+#### Outgoing students consume more alcohol
+
+```{r}
+alc %>% group_by(goout, high_use) %>% summarise(count = n())
+
+#making a dataset based on summary
+gooutdata <- data.frame(
+  goout = c("1", "1", "2", "2", "3", "3", "4", "4", "5", "5"),
+  high_usage = c(FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE, FALSE, TRUE),
+  count = c(19,3,82,15,97,23,40,38,21,32)
+)
+
+ggplot(gooutdata, aes(fill=high_usage, y=count, x=goout)) + geom_bar(position="dodge", stat="identity") + xlab("Outgoing") + ylab("Cases")
+```
+
+Again we can see the hypothesis was accurate. In the outgoing levels of 1-3 (very low to moderate) the gap between high usage and low usage is noticeable. At Outgoing level 4 questionnaires are roughly split and the most outgoing students are more likely to be high usage consumers than low usage.
+
+#### Alcohol consumption male vs female
+
+```{r}
+xtabs(~alc_use+sex, alc)
+
+#making a dataset based on xtabs
+alc_use_data <- data.frame(
+  alc_use = c("1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5", "1", "1.5", "2", "2.5", "3", "3.5", "4", "4.5", "5"),
+  sex = c("male", "male", "male", "male", "male", "male", "male", "male", "male", "female", "female", "female", "female", "female", "female", "female", "female", "female"),
+  count = c(53, 22, 30, 16, 21, 14, 8, 3, 8, 87, 41, 26, 25, 11, 3, 1, 0, 1)
+)
+#plotting the dataset
+ggplot(alc_use_data, aes(fill=alc_use, y=count, x=sex)) + geom_bar(position="fill", stat="identity", colour="black") + xlab("sex") + ylab("percentage of alcogol usage")
+```
+
+Here we've plotted the alcolohol usage (1-5) as percentages of female and male students. Out of interest I specifically plotted the whole spectrum of usage (1-5) rather than the low/high usage. We can see from the bar graph that for females the low alcohol usage values from 1-2 correspond around 80% of the female students where as 1-2 corresponds 60% of male students. It's safe to say that male students are more likely to consume high amounts of alcohol based on the graphs.
+
+### 4. Logistic regression model
+
+As instructed in the assignment we'll use the variables used in hypotheses: G3 (final grade), Fedu (father's education level), goout ('outgoingness' of student) & sex.
+
+```{r}
+# fitting the model & showing the summary
+model <- glm(high_use ~ G3+Fedu+goout+sex, data = alc, family = "binomial")
+summary(model)
+```
+
+
+
+
+```{r}
+# coefficients as odds ratios
+odds_ratios <- coef(model) %>% exp
+
+# confidence intervals
+ci <- confint(model)
+cbind(odds_ratios, ci)
+```
+#### Interpreting the model
+
+From the summary we can see that the p-values of final grade (G3) and father's education (Fedu) are well over 0.05 so they're not significant which contradicts with my hypotheses of these variables. Going out and sex (being male) is statistically significant as both are close to 0 and well below0.001. It would've been interesting to combine parents' education level to see if it had an effect on the model. confidence intervals of 
+
+Going out (goout) is a continuous variable so each unit will increase the log odds of having higher alcohol consumption by 0.73. Since male is the reference group of sex and its' estimate is positive it means being male increases the log odds of having alcohol usage by 0.92.
+
+Based on the estimates all the variables except for final grade can be considered as risk factors. Final grade is the only protective factor in the model though it's non-significant as previously mentioned.
+
+#### Predictive power of the model
+
+```{r}
+#dropping Fedu and G3 from the moodel
+model2 <- glm(high_use ~ goout+sex, data = alc, family = "binomial")
+
+#mutating the original table with model's predictions
+alc <- mutate(alc, probability = predict(model2, type = "response"))
+alc <- mutate(alc, prediction = probability > 0.5)
+#showing the last 10 rows
+select(alc, goout, sex, high_use, probability, prediction) %>% tail(10)
+
+```
+
+If probability is over 0.5 then the model predicts that alcohol consumption is high (TRUE). Let's visualize the actual values and predictions
+
+```{r}
+#plotting the actual values vs predictions
+ggplot(alc, aes(x = probability, y = high_use, col = prediction)) + geom_point()
+
+#tabulating target variable vs prediction
+table(high_use = alc$high_use, prediction = alc$prediction)
+
+# tabulate the target variable versus the predictions with proportions
+table(high_use = alc$high_use, prediction = alc$prediction) %>%  prop.table() %>%  addmargins()
+```
+
+```{r}
+#mean prediction error function
+loss_func <- function(class, prob) {
+  n_wrong <- abs(class - prob) > 0.5
+  mean(n_wrong)
+}
+
+loss_func(class = alc$high_use, prob = alc$probability)
+```
+
+We get 21.4% of the predictions wrong with training data. Overall the model has a pretty hard time predicting higher usag (only 49 predictions correct out of 111 actuals). This might be due to the model's simplicity (only two variables) and because it's using sex as variable which has only two values. This limits it quite significantly since it values sex quite heavily when predicting high usage. For future reference it would be wise to look into other significant variables and add them to the model.
