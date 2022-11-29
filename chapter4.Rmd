@@ -1,0 +1,243 @@
+---
+title: "chapter4"
+author: "Jukka Lankinen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Assignment 4: Clustering and classification
+
+## Analysis
+
+This week we delved into clustering and classification. Clustering means that some of the observations are close to each other than some other points. In other words the data points aren't comprised of a homogeneous sample but they're somehow clustered.
+
+
+### 1. Overview of Boston dataset
+
+This week's dataset is 'Boston' dataset from the MASS library. The dataset has 506 rows and 14 columns/variables in which each row represents a suburb of Boston. The dataframe contains various statistics of each areas' people, tax rates, crime rates, proportion of business acres etc. Description of each variable can be found [here](https://stat.ethz.ch/R-manual/R-devel/library/MASS/html/Boston.html).
+
+```{r}
+# Loading MASS for the dataset
+library(MASS)
+library(tidyverse)
+library(ggplot2)
+library(GGally)
+
+# load the data
+data("Boston")
+
+# explore the dataset
+str(Boston)
+summary(Boston)
+
+# plot matrix of the variables
+boxplot(Boston)
+
+#summaries graphically
+Boston %>%
+gather(key = "var", value = "value") %>%
+ggplot(aes(x = value)) +
+geom_histogram() +
+facet_wrap(~ var, scales = "free")
+
+```
+
+From the summary probably the most jarring statistic is the crime rate. Looking at the crime rate per town (crim) we can see that the 1st quartile is at 0.082 and its' median at 0.25 whereas the mean jumps to 3.61 & 3rd quartile is at 3.61. That seems quite a big difference and the high crimerate areas are raising the average crime rate significantly.
+
+The median of proportion of owned-occupied (age) units build prior to 1940 is 77.5 so the housing stock is fairly old overall. The median value of owner-occupied homes in $1000s (medv) histogram shows us that there's a sudden drop of amount of high priced houses after roughly 25k usd. The average number of rooms per dwelling looks like it's a bit right-skewed and suburb housing markets seem to cater those who need around 6 rooms.
+
+Let's use corrplot library to graphically to also show the correlation coefficients between variables:
+
+```{r}
+
+
+library(corrplot)
+round(cor(Boston),1)
+corrplot(cor(Boston), 
+         type="upper", 
+         )
+```
+
+Correlation coefficients give us values between -1 and 1. Positive correlation (0 to 1) means that when one variable changes, the other variable changes to same direction. Negative correlation (-1 to 0) means that the other variable goes to the opposite direction. 0 valua means no correlation. 
+
+From correlations we can see some self-evident correlations such as the strong negative correlation of nitrogen oxides concentration (nox) and weighted mean distances to Five Boston employment centres (dis). The longer the distance from high traffic zones the less nitrogen oxides are in the area. Obviously the (nox) correlates strongly (and positively) with proportion of non-retail business acres per town (indus). Factories typically produce more emissions so more nitrogen oxides in those suburbs. Interestingly there's also a strong positive correlation between accessibility to radial highways (rad) and full-value property tax-rate per $10000 (tax). 
+
+Biggest correlations to crime rate are interestingly the before-mentioned full-value property-tax rate per $10000 (tax) and accessibility to radial highways (rad). This is all speculation but this might be due to how crimes could be more likely to be reported in richer areas than in poorer suburbs - how this data was gained is interesting nonetheless.
+
+### 2. Standardizing the dataset
+
+As seen earlier from the box plots the variables get pretty different values so in age, black and tax variables compared to the rest so it'd wise to scale the whole dataset. Function scale() scales the dataset like this:
+
+$$scaled(x) = \frac{x - mean(x)}{ sd(x)}$$
+
+```{r}
+# center and standardize variables
+boston_scaled <- scale(Boston)
+
+# summaries of the scaled variables
+summary(boston_scaled)
+
+
+# change the object to data frame
+boston_scaled <- as.data.frame(boston_scaled)
+
+```
+
+Every variable now has a mean of 0 as seen from the summary. 
+
+#### Creation of categorical variable
+
+Let's make a categorical variable of the crime rate in Boston by first creating a quantile vector and then creating the actual variable with labes "low", "med_low", "med_high" and "high". After that we remove the original crim variable from the data frame and add the categorical value.
+
+```{r}
+# Work with the exercise in this chunk, step-by-step. Fix the R code!
+# Boston and boston_scaled are available
+
+# summary of the scaled crime rate
+summary(boston_scaled$crim)
+
+# create a quantile vector of crim and print it
+bins <- quantile(boston_scaled$crim)
+bins
+
+# create a categorical variable 'crime'
+crime <- cut(boston_scaled$crim, breaks = bins, labels = c("low", "med_low", "med_high", "high"), include.lowest = TRUE)
+
+# look at the table of the new factor crime
+
+
+# remove original crim from the dataset
+boston_scaled <- dplyr::select(boston_scaled, -crim)
+
+# add the new categorical value to scaled data
+boston_scaled <- data.frame(boston_scaled, crime)
+
+summary(boston_scaled)
+str(boston_scaled)
+
+```
+
+As seen from the summary there's a new Factor variable "crime" that has 126-127 counts in each category.
+
+#### Creation of data and training set
+
+We'll divide the dataset to train and test sets in which 80% of the data belongs to the train set. The divide is done randomly and we'll save the test sets correct crime variables to correct_classes.
+
+```{r}
+
+
+# number of rows in the Boston dataset 
+n <- nrow(boston_scaled)
+
+# choose randomly 80% of the rows
+ind <- sample(n,  size = n * 0.8)
+
+# create train set
+train <- boston_scaled[ind,]
+
+# create test set 
+test <- boston_scaled[-ind,]
+
+# save the correct classes from test data
+correct_classes <- test$crime
+
+# remove the crime variable from test data
+test <- dplyr::select(test, -crime)
+
+```
+
+### 3. Linear Discrimant Analysis
+
+Linear Discrimant Analysis (LDA) is a classification method that is used for modelling differences in groups i.e. separating two or more classes. Below we have fitted the dataset to a LDA model and drawn the LDA model. In this case we want to see how the numerous variables affect crime rate.
+
+```{r}
+# linear discriminant analysis
+lda.fit <- lda(crime ~ ., data = train)
+
+# print the lda.fit object
+lda.fit
+
+# the function for lda biplot arrows
+lda.arrows <- function(x, myscale = 1, arrow_heads = 0.1, color = "red", tex = 0.75, choices = c(1,2)){
+  heads <- coef(x)
+  arrows(x0 = 0, y0 = 0, 
+         x1 = myscale * heads[,choices[1]], 
+         y1 = myscale * heads[,choices[2]], col=color, length = arrow_heads)
+  text(myscale * heads[,choices], labels = row.names(heads), 
+       cex = tex, col=color, pos=3)
+}
+
+# target classes as numeric
+classes <- as.numeric(train$crime)
+
+# plot the lda results
+plot(lda.fit, dimen = 2, col = classes, pch = classes)
+lda.arrows(lda.fit, myscale = 1)
+
+```
+
+The model's probabilities are still roughyly 25% with low and med_low groups being slightly higher than before (at 25.9 and 25.4). The most impactful variable towards high crime rate is rad - index of accessibility to radial highways with a coefficient of LD1 @ 3.10.
+
+
+
+```{r}
+# predict classes with test data
+lda.pred <- predict(lda.fit, newdata = test)
+# cross tabulate the results
+table(correct = correct_classes, predicted = lda.pred$class)
+```
+
+The model seems to predict high crime rate zones pretty well as they had a high coefficiency with radial highways. Med_high was predicted at roughly 70% correctly, low_med was predicted correctly at rate 65% and low was rate 63%.
+
+### 4. K-means clustering
+
+Let's reload the Boston dataset and calculate distances between observations with euclidean and manhattan methods. Euclidean distance is linear distance between two data points in a plane. Manhattan distance is the sum of absolute differences between points in all dimensions, in other words it can be viewed as a zig-zagging 'city block distance'.
+
+```{r}
+# loading data and standardizing it
+data("Boston")
+newboston <- scale(Boston)
+newboston <- as.data.frame(newboston)
+
+#calculating distances with euclidean and manhattan methods
+dist_euc <- dist(newboston, method = "euclidean")
+dist_man <- dist(newboston, method = "manhattan")
+summary(dist_euc)
+summary(dist_man)
+
+```
+
+And the lets run a k-mean algorithm lets investigate.
+
+```{r}
+kmean <- kmeans(newboston, centers=4)
+pairs(newboston, col = kmean$cluster)
+pairs(newboston[6:10], col = kmean$cluster)
+```
+
+With this many variables pairs is a bit of a mess but we could show it in smaller 'doses' by comparing smaller amounts of columns at once. Let's determine the optimal amount of clusters: 
+
+```{r}
+# determine the number of clusters
+k_max <- 10
+
+# calculate the total within sum of squares
+twcss <- sapply(1:k_max, function(k){kmeans(newboston, k)$tot.withinss})
+
+# visualize the results
+qplot(x = 1:k_max, y = twcss, geom = 'line')
+```
+
+The twcss value drops radically when clusters go to 2 so this should be the optimal amount of clusters. Let's plot pairs again with 2 centers.
+
+```{r}
+kmean2 <- kmeans(newboston, centers=2)
+pairs(newboston, col = kmean2$cluster)
+pairs(newboston[6:10], col = kmean2$cluster)
+```
+
+The clusters are much more recognizable now and and less overlapping.
+
+## Data wrangling
+
+This time data wrangling exercise was prepwork for next week's assignemt. As usual you can find the create_human.R script from my repo's [data folder](https://github.com/jmlankinen/IODS-project/tree/master/data).
