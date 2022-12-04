@@ -346,7 +346,7 @@ Hint:
 library(tidyr); library(dplyr); library(ggplot2)
 
 # glimpse at the alc data
-
+glimpse(alc)
 
 # use gather() to gather columns into key-value pairs and then glimpse() at the resulting data
 gather(alc) %>% glimpse
@@ -407,7 +407,7 @@ Hints:
 library(dplyr); library(ggplot2)
 
 # produce summary statistics by group
-alc %>% group_by(sex) %>% summarise(count = n())
+alc %>% group_by(sex, high_use) %>% summarise(count = n(), mean_grade =  mean(G3))
 
 
 ```
