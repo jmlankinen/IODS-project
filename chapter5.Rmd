@@ -1,0 +1,13 @@
+---
+title: "chapter5"
+author: "Jukka Lankinen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+# Assignment 5: Dimensionality reduction techniques
+
+## Data wrangling exercise
+
+In this week's data wrangling exercise we further modified last week's human dataframe by removing rows with NA values, rows relating to regions and by making country name as the row name. The exercise script can be found [here](https://github.com/jmlankinen/IODS-project/blob/master/data/A5_datawrangling.R).
+
