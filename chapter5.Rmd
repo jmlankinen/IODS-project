@@ -7,7 +7,170 @@ output: html_document
 
 # Assignment 5: Dimensionality reduction techniques
 
+This week's subject are statistical methods related to 'dimensionality reduction techniques'. Most real-life phenomena are multi-dimensional which have tens to hunderds of dimensions. In order to simplify the issue-at-hand we'll try to reduce the number of dimensions.
+
 ## Data wrangling exercise
 
 In this week's data wrangling exercise we further modified last week's human dataframe by removing rows with NA values, rows relating to regions and by making country name as the row name. The exercise script can be found [here](https://github.com/jmlankinen/IODS-project/blob/master/data/A5_datawrangling.R).
 
+## Analysis
+
+This week we'll look into the ['human' dataset](https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/human2.txt) which combines countries' various indicators related to such things as life expectancy, education, maternal mortality, proportion of labour force. More information of the data set can be found from the [metadata](https://github.com/KimmoVehkalahti/Helsinki-Open-Data-Science/blob/master/datasets/human_meta.txt), the original [data page](https://hdr.undp.org/data-center/human-development-index) and the [actual calculations](https://hdr.undp.org/system/files/documents//technical-notes-calculating-human-development-indices.pdf).
+
+### Overview of the data
+
+Let's run some code to show an overview of the data:
+
+```{r}
+# read the human data
+human <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/human2.txt", 
+                    sep =",", header = T)
+#structure
+str(human)
+
+#summary
+summary(human)
+
+#visualizing variables
+library(GGally)
+ggpairs(human)
+
+#correlation plot 
+library(corrplot)
+cor(human) %>% corrplot()
+
+```
+
+The dataset has 155 rows with 8 variables with row names being the country names. With the ggpairs() and cor() & corrplot() pipeline we can easily see positive correlations between Edu.Exp and and Life Exp. There are various negative correlations sucg Mat.Mor-Life.Exp, Mat.Mor-Edu.Exp, Ado.Birth-Life.Exp, Edu.Exp-Ado.Birth & Edu2.FM-Mat.Mor. The descriptions for abbreviations can be found [here](https://github.com/KimmoVehkalahti/Helsinki-Open-Data-Science/blob/master/datasets/human_meta.txt) but the overall conclusion based on correlations is that education affects life expectancy positively whereas poor education has a strong correlation with adolescent birth rate & maternal mortality rate. One of the obvious correlations is low maternal mortality rate's correlation to life expectancy.
+
+Of the actual variables it seems like Edu.Exp is fairly normally distributed. GNI, Mat.Mor, Ado.Birth and Parli.F have a bit of a left skew whereas Edu2.FM and Life.Exp have a right-skew.
+
+The abbreviations:
+
+GNI = Gross National Income per capita
+Life.Exp = Life expectancy at birth
+Edu.Exp = Expected years of schooling 
+Mat.Mor = Maternal mortality ratio
+Ado.Birth = Adolescent birth rate
+Parli.F = Percetange of female representatives in parliament
+Edu2.FM = Edu2.F / Edu2.M
+Labo.FM = Labo2.F / Labo2.M
+
+### Principal component analysis (PCA)
+
+PCA is a methon in which reduces any number of measured (continuous) and correlated variables into few uncorrelated components that collect as much variance as possible. Important components can be then used to analyse the phenomenon without the unrelated dimensions.
+
+#### PCA on raw data
+
+```{r}
+#perform a PCA on the raw human data
+pca_human_raw <- prcomp(human)
+
+#summary
+summary(human)
+
+#creating labels with rounded PC's
+pca_perc_raw <- round(100*summary(pca_human_raw)$importance[2, ], digits =1)
+pc_lab_raw = paste0(names(pca_perc_raw), " (", pca_perc_raw, "%)")
+
+
+# draw a biplot of RAW data
+biplot(pca_human_raw, choices = 1:2, cex = c(0.3, 0.8), col = c("grey40", "deeppink2"), xlab = pc_lab_raw[1], ylab = pc_lab_raw[2])
+```
+
+Due to the variables varying (from Labo.FM's min-max of 0.1857-1.0380 to GNI's 581-123124) so much in the raw data it's hard to draw any conclusion from the plot
+
+#### PCA on standardized data
+
+```{r}
+# standardize the variables
+human_std <- scale(human)
+
+#summary
+summary(human_std)
+
+# perform a PCA on the standardized data
+pca_human_std <- prcomp(human_std)
+
+#creating labels with rounded PC's
+pca_perc_std <- round(100*summary(pca_human_std)$importance[2, ], digits =1)
+pc_lab_std = paste0(names(pca_perc_std), " (", pca_perc_std, "%)")
+
+# draw a biplot of standardized data
+biplot(pca_human_std, choices = 1:2, cex = c(0.5, 0.8), col = c("grey40", "deeppink2"),  xlab = pc_lab_std[1], ylab = pc_lab_std[2])
+```
+
+With the data standardized (mean=0, standard deviation=1) it should be easier to compare the variables.
+
+#### Interpretation of results
+
+The X-label and Y-labels shows us the PC1 and PC2 scores. Due to the raw data's high numeric differences the raw data plot is pretty much unreadable. With standardized we got 53.6% and 16.2% respectively. 
+
+The angles between vectors/arrows can be interpreted as the correlations between variables. When variable vectors have a roughly 90 degree angle it means they're not likely to be correlated such as LAbo.FM and Life.Exp. If vectors are close to each other it means that they're positively correlated such as maternal mortality and adolescent birth rate. GNI, Edu.Exp, Life.Exp and Edu2.FM are positively correlated with each other. If vectors are in a 180 degree angle of each other it means that they're negatively correlated like the previously mentioned (GNI, Edu.Exp, Life.Exp and Edu2.FM) are negatively correlated to Mat.Mor and Ado.Birth. The angle between a variable vector and PC axis can be interpreted in same fashion.
+
+The length of the vector refers to standard deviation of variable. In the raw data biplot we can see how GNI's standard deviation is huge (Qatar with a value of 123124). In the standardized one the vectors are naturally the same length.
+
+Overall the vectors can be divided into 3 clusters:
+- Edu.Exp, GNI, Edu2.FM and Life.Exp
+- Mat.Mor and Ado.Birth 
+- Parli.F and Labo.FM 
+
+### Multiple correspondence analysis (MCA)
+
+Multiple correspondence analysis is a similar method to PCA but makes it possible to reduce dimensions in variables that are discrete or even nominal which by finding suitable continous scales for them.
+
+We'll look into tea data from FactoMineR package. It's a questionnaire made for 300 individuals about their tea drinking habits and perceptions.
+
+```{r}
+tea <- read.csv("https://raw.githubusercontent.com/KimmoVehkalahti/Helsinki-Open-Data-Science/master/datasets/tea.csv", stringsAsFactors = TRUE)
+
+View(tea)
+
+str(tea)
+```
+
+Dataset has 36 variables which are mostly 2 level factorial, few variables with +3 levels and a numeric one of age.
+
+```{r}
+library(FactoMineR)
+library(dplyr)
+library(tidyr)
+
+# column names to keep in the dataset
+keep_column <- c("Tea", "How", "how", "sugar", "where", "lunch", "price", "age_Q")
+
+# select the 'keep_column' to create a new dataset
+tea_time <- tea[keep_column]
+
+# look at the summaries and structure of the data
+summary(tea_time)
+
+# visualize the dataset
+library(ggplot2)
+pivot_longer(tea_time, cols = everything()) %>% 
+  ggplot(aes(value)) +
+  facet_wrap("name", scales = "free") + 
+  geom_bar() + theme(axis.text.x = element_text(angle = 45, hjust = 1, size = 8))
+```
+
+A quick look into the data shows that the most common way to prepare tea is by tea bag and without any condiments (lemon, milk or other). Tea is usually consumed outside lunch hours. There's a roughly 50-50 ratio of sugar users and the most common bought tea is Early Grey.
+
+
+```{r}
+#MCA
+tea_mca <- MCA(tea_time, graph = FALSE)
+
+#summary of model
+summary(tea_mca)
+
+#visualize model
+plot(tea_mca, invisible=c("ind"), habillage = "quali", graph.type = "classic")
+
+library(factoextra)
+fviz_mca_biplot(tea_mca, 
+               repel = TRUE,
+               label = c("var", "quali.sup", "quanti.sup"),
+               ggtheme = theme_minimal())
+```
+
+With the chosen variables it's a bit hard to differentiate tea consumers from each other. There is, however, a clear cluster of p_upscale, unpackaged and tea shop from rest of the tea consumers.
