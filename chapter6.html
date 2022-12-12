@@ -357,14 +357,14 @@ display: none;
 </div>
 
 
-<div id="assignment-6-analysis-of-longitudinal-data" class="section level2">
-<h2>Assignment 6: Analysis of longitudinal data</h2>
+<div id="assignment-6-analysis-of-longitudinal-data" class="section level1">
+<h1>Assignment 6: Analysis of longitudinal data</h1>
 <p>This week we’ll look into data that will include two types of
 dependencies simultaneously. On toop of correlated variables we have
 observation data points that will also be correlated with each other. To
 analyse this data we’ll use linear mixed effects models.</p>
-<div id="data-wrangling" class="section level3">
-<h3>Data wrangling</h3>
+<div id="data-wrangling" class="section level2">
+<h2>Data wrangling</h2>
 <p>This week’s data wrangling exercise had us change convert dataset
 from wide format to long format. There were also some modifications to
 the original dataset such as converting integers to factorials and
@@ -373,14 +373,14 @@ formats can be found <a href="https://www.statology.org/long-vs-wide-data/">here
 find this week’s data wrangling exercise named meet_and_repeat.R <a href="https://github.com/jmlankinen/IODS-project/tree/master/data">from
 my repo as usual</a>.</p>
 </div>
-<div id="rats-dataset-analysis" class="section level3">
-<h3>Rats dataset analysis</h3>
+<div id="rats-dataset-analysis" class="section level2">
+<h2>Rats dataset analysis</h2>
 <p>The analysis consists of two different datasets and two different
 analyses. First we’ll look into rats dataset in which three rat groups
 were put on different diets and each animal’s body weight was recorded
 approximately weekly over a 9-week period.</p>
-<div id="formatting-the-dataset" class="section level4">
-<h4>Formatting the dataset</h4>
+<div id="formatting-the-dataset" class="section level3">
+<h3>Formatting the dataset</h3>
 <p>We’ll transform the data into long form and extract day numbers in
 the style of data wrangling exercise</p>
 <pre class="r"><code>rats &lt;- read.table(&quot;https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt&quot;, sep = &#39;\t&#39;, header = T)
@@ -437,8 +437,8 @@ str(rats)</code></pre>
 <p>We’ve now turned the dataset from 16x13 wide format into 176x5
 “tibble”/long format.</p>
 </div>
-<div id="graphs-interpretations" class="section level4">
-<h4>Graphs &amp; Interpretations</h4>
+<div id="graphs-interpretations" class="section level3">
+<h3>Graphs &amp; Interpretations</h3>
 <p>Let’s graph each rat’s weight by its’ diet.</p>
 <pre class="r"><code># Work with the exercise in this chunk, step-by-step. Fix the R code!
 # BPRSL is available
@@ -588,8 +588,8 @@ Further research could be in order. Maybe in a longer time period we’d
 see a difference?</p>
 </div>
 </div>
-<div id="bprs" class="section level3">
-<h3>BPRS</h3>
+<div id="bprs" class="section level2">
+<h2>BPRS</h2>
 <p>In the second dataset we have 40 males subjects who were randomly
 assigned to one of two treatment groups and each subject was rated
 weekly with a brief psychiatric rating scale (BPRS) value.</p>

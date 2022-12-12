@@ -5,19 +5,19 @@ date: "`r Sys.Date()`"
 output: html_document
 ---
 
-## Assignment 6: Analysis of longitudinal data
+# Assignment 6: Analysis of longitudinal data
 
 This week we'll look into data that will include two types of dependencies simultaneously. On toop of correlated variables we have observation data points that will also be correlated with each other. To analyse this data we'll use linear mixed effects models.
 
-### Data wrangling
+## Data wrangling
 
 This week's data wrangling exercise had us change convert dataset from wide format to long format. There were also some modifications to the original dataset such as converting integers to factorials and creating extra column from character to integer. More info of dataset formats can be found [here](https://www.statology.org/long-vs-wide-data/) and you can find this week's data wrangling exercise named meet_and_repeat.R [from my repo as usual](https://github.com/jmlankinen/IODS-project/tree/master/data).
 
-### Rats dataset analysis
+## Rats dataset analysis
 
 The analysis consists of two different datasets and two different analyses. First we'll look into rats dataset in which three rat groups were put on different diets and each animal's body weight was recorded approximately weekly over a 9-week period. 
 
-#### Formatting the dataset
+### Formatting the dataset
 
 We'll transform the data into long form and extract day numbers in the style of data wrangling exercise
 
@@ -50,7 +50,7 @@ str(rats)
 
 We've now turned the dataset from 16x13 wide format into 176x5 "tibble"/long format.
 
-#### Graphs & Interpretations
+### Graphs & Interpretations
 
 Let's graph each rat's weight by its' diet.
 
@@ -187,6 +187,6 @@ anova(fit)
 
 According to ANOVA baseline seems to predict the mean well and Groups are barely outside the statistical significance (0.07 > 0.05). Further research could be in order. Maybe in a longer time period we'd see a difference?
 
-### BPRS
+## BPRS
 
 In the second dataset we have 40 males subjects who were randomly assigned to one of two treatment groups and each subject was rated weekly with a brief psychiatric rating scale (BPRS) value.
