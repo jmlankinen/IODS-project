@@ -1,0 +1,192 @@
+---
+title: "chapter6"
+author: "Jukka Lankinen"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+## Assignment 6: Analysis of longitudinal data
+
+This week we'll look into data that will include two types of dependencies simultaneously. On toop of correlated variables we have observation data points that will also be correlated with each other. To analyse this data we'll use linear mixed effects models.
+
+### Data wrangling
+
+This week's data wrangling exercise had us change convert dataset from wide format to long format. There were also some modifications to the original dataset such as converting integers to factorials and creating extra column from character to integer. More info of dataset formats can be found [here](https://www.statology.org/long-vs-wide-data/) and you can find this week's data wrangling exercise named meet_and_repeat.R [from my repo as usual](https://github.com/jmlankinen/IODS-project/tree/master/data).
+
+### Rats dataset analysis
+
+The analysis consists of two different datasets and two different analyses. First we'll look into rats dataset in which three rat groups were put on different diets and each animal's body weight was recorded approximately weekly over a 9-week period. 
+
+#### Formatting the dataset
+
+We'll transform the data into long form and extract day numbers in the style of data wrangling exercise
+
+```{r}
+rats <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", sep = '\t', header = T)
+library(dplyr)
+library(tidyr)
+
+str(rats)
+#16x13 with ID, groups and weekdays. Only integer variables.
+
+# Factor treatment, subject, ID and groups
+rats$ID <- factor(rats$ID)
+rats$Group <- factor(rats$Group)
+
+#Convert rats to long form
+rats <-  pivot_longer(rats, cols = -c(ID, Group),
+                      names_to = "WD", values_to = "Weight") %>%
+  arrange(WD) #order by weekday variable
+
+#Extract the day number
+rats <-  rats %>% 
+  mutate(Time = as.integer(substr(WD, 3, 4)))
+
+
+str(rats)
+#176x5 tibble with factorial ID's and groups. Character day and integer weight (grams) & time (day).
+
+```
+
+We've now turned the dataset from 16x13 wide format into 176x5 "tibble"/long format.
+
+#### Graphs & Interpretations
+
+Let's graph each rat's weight by its' diet.
+
+```{r}
+# Work with the exercise in this chunk, step-by-step. Fix the R code!
+# BPRSL is available
+
+#Access the package ggplot2
+library(ggplot2)
+
+# Draw the plot
+ggplot(rats, aes(x = Time, y = Weight, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=3)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(limits = c(min(rats$Weight), max(rats$Weight)))
+
+```
+
+At a first glance it seems like Grooup 2's and Group 3's have a slightly steeper weight gain than in Group 1.
+
+As Group 2 and 3 rats have a higher starting weight it might be wise to look into standardized values instead. Standardization is described in the formula below:
+
+$$standardised(x) = \frac{x - mean(x)}{ sd(x)}$$
+
+
+```{r}
+# Standardise the variable Weight
+rats <- rats %>%
+  group_by(Time) %>%
+  mutate(stdweight = (Weight-mean(Weight)) / sd(Weight)) %>%
+  ungroup()
+
+# Glimpse the data
+glimpse(rats)
+
+# Plot again with the standardised Weight
+library(ggplot2)
+ggplot(rats, aes(x = Time, y = stdweight, linetype = ID)) +
+  geom_line() +
+  scale_linetype_manual(values = rep(1:10, times=3)) +
+  facet_grid(. ~ Group, labeller = label_both) +
+  theme(legend.position = "none") + 
+  scale_y_continuous(name = "standardized weight")
+
+```
+
+Let's also plot the dataset with variation of each data point which you can see from the whiskers from the plot below.
+
+```{r}
+# Summary data with mean and standard error of Weight by treatment and week
+# n = n() is number of subjects per group.
+ratsS <- rats %>%
+  group_by(Group, Time) %>%
+  summarise( mean = mean(Weight), n = n(), se = sd(Weight)/sqrt(n) ) %>%
+  ungroup()
+
+# Glimpse the data
+glimpse(ratsS)
+
+# Plot the mean profiles
+library(ggplot2)
+ggplot(ratsS, aes(x = Time, y = mean, linetype = Group, shape = Group)) +
+  geom_line() +
+  scale_linetype_manual(values = c(1,2,3)) +
+  geom_point(size=3) +
+  scale_shape_manual(values = c(1,2,3)) +
+  geom_errorbar(aes(ymin=mean-se, ymax=mean+se, linetype="1"), width=0.3) +
+  theme(legend.position = c(0.9,0.5)) +
+  scale_y_continuous(name = "mean(Weight) +/- se(Weight)")
+
+```
+
+Group 1's variance is pretty much non-existant. Group 2 varies quite significantly whereas group 2's variance falls between Group 1 and 3.
+
+
+Lets graph boxplot of the groups and also remove the outlier found in group 2.
+
+```{r}
+# Create a summary data by treatment and subject with mean as the summary variable (ignoring baseline Day 1)
+ratsbox <- rats %>%
+  filter(Time > 1) %>%
+  group_by(Group, ID) %>%
+  summarise( mean=mean(Weight) ) %>%
+  ungroup()
+
+# Glimpse the data
+glimpse(ratsbox)
+
+# Draw a boxplot of the mean versus treatment
+library(ggplot2)
+ggplot(ratsbox, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(Weight), days 8-64")
+
+#There's a significant outlier in Group 2 that has almost ~600 gram mean weight, let's remove it
+ratsbox_outlier <- filter(ratsbox, mean<575)
+ggplot(ratsbox_outlier, aes(x = Group, y = mean)) +
+  geom_boxplot() +
+  stat_summary(fun = "mean", geom = "point", shape=23, size=4, fill = "white") +
+  scale_y_continuous(name = "mean(Weight), days 8-64")
+
+
+```
+
+Boxplots are pretty tightly packed as seen from the previous graphs and from the boxplot. The weights measured during this time period doesn't seem change that much within groups. 
+
+
+And finally let's run an analysis of variances (ANOVA).
+
+```{r}
+ratsog <- read.table("https://raw.githubusercontent.com/KimmoVehkalahti/MABS/master/Examples/data/rats.txt", sep = '\t', header = T)
+
+
+# Add the baseline from the original data as a new variable to the summary data
+rats1 <- rats %>%
+  filter(Time > 1) %>%
+  group_by(Group,ID) %>%
+  summarise( mean=mean(Weight) ) %>%
+  ungroup() 
+
+rats1 <- rats1 %>%
+  mutate(baseline = ratsog$WD1)
+
+# Fit the linear model with the mean as the response 
+fit <- lm(mean ~ baseline+Group, data = rats1)
+
+# Compute the analysis of variance table for the fitted model with anova()
+anova(fit)
+
+```
+
+According to ANOVA baseline seems to predict the mean well and Groups are barely outside the statistical significance (0.07 > 0.05). Further research could be in order. Maybe in a longer time period we'd see a difference?
+
+### BPRS
+
+In the second dataset we have 40 males subjects who were randomly assigned to one of two treatment groups and each subject was rated weekly with a brief psychiatric rating scale (BPRS) value.
